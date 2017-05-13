@@ -20,15 +20,16 @@ public class CsvDataTest {
             "Nadia;29;Madrid" + System.lineSeparator();
 
     public static final String FIRST_PAGE =
-                    "Name |Age|City    |" + System.lineSeparator() +
-                    "-----+---+--------+" + System.lineSeparator() +
-                    "Peter|42 |New York|" + System.lineSeparator() +
-                    "Paul |57 |London  |" + System.lineSeparator() +
-                    "Mary |35 |Munich  |" + System.lineSeparator() +
-                    "N(ext page, P(revious page, F(irst page, L(ast page, eX(it";
+                    "No.|Name |Age|City    |" + System.lineSeparator() +
+                    "---+-----+---+--------+" + System.lineSeparator() +
+                    " 1.|Peter|42 |New York|" + System.lineSeparator() +
+                    " 2.|Paul |57 |London  |" + System.lineSeparator() +
+                    " 3.|Mary |35 |Munich  |" + System.lineSeparator() +
+                    "Page 1 of 2" + System.lineSeparator() +
+                    CsvData.MENU_LINE;
     
     @Test
-    public void testThatTestDataIsRecognizedAs3Columns() throws Exception {
+    public void testThatTestDataIsRecognizedAs3ColumnsPlusIndexColumn() throws Exception {
         //arrange
         CsvData csvData = new CsvData(TEST_DATA, 1);
 
@@ -36,7 +37,7 @@ public class CsvDataTest {
         int numberOfColumns = csvData.getNumberOfColumns();
 
         //assert
-        assertThat(numberOfColumns, is(equalTo(3)));
+        assertThat(numberOfColumns, is(equalTo(4)));
     }
 
     @Test
@@ -47,11 +48,10 @@ public class CsvDataTest {
         //act
         int[] widths = csvData.calculateColumnWidthsForPage(1);
 
-
         //assert
-        assertThat(widths[0], is(equalTo(6)));
-        assertThat(widths[1], is(equalTo(3)));
-        assertThat(widths[2], is(equalTo(8)));
+        assertThat(widths[1], is(equalTo(6)));
+        assertThat(widths[2], is(equalTo(3)));
+        assertThat(widths[3], is(equalTo(8)));
     }
 
     @Test
