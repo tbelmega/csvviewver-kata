@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class CsvData {
-    public static final String LINE_SEPERATOR = System.lineSeparator();
+    public static final String LINE_SEPERATOR = "\n";
     public static final String COLUMN_SEPARATOR = ";";
     public static final String MENU_LINE = "N(ext page, P(revious page, F(irst page, L(ast page, eX(it";
     private final String[] alleZeilen;
@@ -120,10 +120,15 @@ public class CsvData {
     }
 
     public static void main(String[] args) throws IOException {
+        int numberOfLinesPerPage = 100;
+        if (args.length > 0) {
+            numberOfLinesPerPage = Integer.parseInt(args[0]);
+        }
+
         InputStream resourceAsStream = CsvData.class.getClassLoader().getResourceAsStream("besucher.csv");
         String data = IOUtils.toString(resourceAsStream, "utf-8");
 
-        CsvData csv = new CsvData(data, 100);
+        CsvData csv = new CsvData(data, numberOfLinesPerPage);
         String pageFormatted = csv.getPageFormatted(1);
         System.out.println(pageFormatted);
     }
