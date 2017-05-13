@@ -4,6 +4,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Scanner;
 
 public class CsvData {
     public static final String LINE_SEPERATOR = "\n";
@@ -120,16 +121,41 @@ public class CsvData {
     }
 
     public static void main(String[] args) throws IOException {
-        int numberOfLinesPerPage = 100;
-        if (args.length > 0) {
-            numberOfLinesPerPage = Integer.parseInt(args[0]);
-        }
+        int numberOfLinesPerPage = determineNumberOfPages(args);
 
         InputStream resourceAsStream = CsvData.class.getClassLoader().getResourceAsStream("besucher.csv");
         String data = IOUtils.toString(resourceAsStream, "utf-8");
 
         CsvData csv = new CsvData(data, numberOfLinesPerPage);
-        String pageFormatted = csv.getPageFormatted(1);
-        System.out.println(pageFormatted);
+
+        runMainMenu(csv);
+    }
+
+    private static void runMainMenu(CsvData csv) {
+        int currentPage = 2;
+        char userInput = 'F';
+        while (userInput != 'X') {
+            String pageFormatted = csv.getPageFormatted(currentPage);
+            System.out.println(pageFormatted);
+
+            userInput = new Scanner(System.in).next().charAt(0);
+
+            switch (userInput) {
+                case 'F': currentPage = 1; break;
+                case 'N': currentPage = Math.min(currentPage + 1, csv.getNumberOfPages()); break;
+                case 'P': currentPage = Math.max(currentPage - 1, 1); break;
+                case 'L': currentPage = csv.getNumberOfPages(); break;
+            }
+        }
+    }
+
+    private static int determineNumberOfPages(String[] args) {
+        int numberOfLinesPerPage = 100;
+        if (args.length > 0) {
+            // Wenn Nutzer eine Zahl als Programmargument übergibt,
+            // nutze diese für Anzahl der Zeilen pro Page
+            numberOfLinesPerPage = Integer.parseInt(args[0]);
+        }
+        return numberOfLinesPerPage;
     }
 }
