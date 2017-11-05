@@ -7,14 +7,21 @@ import java.io.InputStream;
 import java.util.Scanner;
 
 public class CsvData {
-    public static final String LINE_SEPERATOR = "\n";
+    public static final String LINE_SEPERATOR = "\r\n";
     public static final String COLUMN_SEPARATOR = ";";
-    public static final String MENU_LINE = "N(ext page, P(revious page, F(irst page, L(ast page, eX(it";
+    public static final String MENU_LINE = "N(ext page, P(revious page, F(irst page, L(ast page, J(ump to page, eX(it";
+    private static Scanner scanner = new Scanner(System.in);
     private final String[] alleZeilen;
     private final int linesPerPage;
 
     public CsvData(String data, int numberOfLinesPerPage) {
         this.alleZeilen = data.split(LINE_SEPERATOR);
+
+        alleZeilen[0] = "No.;" + alleZeilen[0];
+        for (int i = 1; i < this.alleZeilen.length; i++) {
+            alleZeilen[i] = i + ".;" + alleZeilen[i]; // add index to the beginning of each line
+        }
+
         this.linesPerPage = numberOfLinesPerPage;
     }
 
@@ -31,9 +38,10 @@ public class CsvData {
         // create an Array of correct size. all fields are initialized with 0.
         int[] maxWidths = new int[getNumberOfColumns()];
 
+        // bug gefunden: für die breite der spalten wird nur die 1. page geprüft, nicht die aktuelle
         for (int i = 0; i < page.length; i++) { // Für jede Zeile ...
 
-            String[] zellen = alleZeilen[i].split(COLUMN_SEPARATOR);
+            String[] zellen = getPage(pageNumber)[i].split(COLUMN_SEPARATOR);
 
             for (int j = 0; j < zellen.length; j++) { // ... betrachte jede Spalte.
                 if (maxWidths[j] < zellen[j].length()) // Wenn größer als bisheriges Maximum
@@ -81,8 +89,13 @@ public class CsvData {
             prettyPrinted.append(formatLine(pageZeilen[i], columnWidths)); //Datenzeilen
         }
 
+        prettyPrinted.append(pagePositionLine(pageNumber));
         prettyPrinted.append(MENU_LINE); // Menüzeile
         return prettyPrinted.toString();
+    }
+
+    private String pagePositionLine(int pageNumber) {
+        return "Page " + pageNumber + " of " + this.getNumberOfPages() + System.lineSeparator();
     }
 
     /** Create a line with dashes and plus characters to separate headline from data.*/
@@ -90,7 +103,7 @@ public class CsvData {
         StringBuilder lineBuilder = new StringBuilder();
 
         for (int i = 0; i < columnWidths.length; i++) {
-            String dashes = formatCell("", columnWidths[i], '-');
+            String dashes = formatRightPadCell("", columnWidths[i], '-');
             lineBuilder.append(dashes).append('+');
         }
 
@@ -103,14 +116,27 @@ public class CsvData {
 
         StringBuilder lineBuilder = new StringBuilder();
 
-        for (int i = 0; i < zellen.length; i++) {
-            lineBuilder.append(formatCell(zellen[i], columnWidths[i], ' ')).append("|");
+        lineBuilder.append(formatLeftPadCell(zellen[0], columnWidths[0], ' ')).append("|");
+        for (int i = 1; i < zellen.length; i++) {
+            lineBuilder.append(formatRightPadCell(zellen[i], columnWidths[i], ' ')).append("|");
         }
         return lineBuilder.toString() + LINE_SEPERATOR;
     }
 
-    /** Fill this cell with the given filler char, to match the intended column width. */
-    private String formatCell(String cellValue, int columnWidth, char fillerChar) {
+    /** Fill this cell left of the value with the given filler char, to match the intended column width. */
+    private String formatLeftPadCell(String cellValue, int columnWidth, char fillerChar) {
+        int numberOfSpaces = columnWidth - cellValue.length();
+        StringBuilder cellValueBuilder = new StringBuilder();
+        for (int i = 0; i < numberOfSpaces; i++) {
+            cellValueBuilder.append(fillerChar);
+        }
+        cellValueBuilder.append(cellValue);
+        cellValue = cellValueBuilder.toString();
+        return cellValue;
+    }
+
+    /** Fill this cell right of the value with the given filler char, to match the intended column width. */
+    private String formatRightPadCell(String cellValue, int columnWidth, char fillerChar) {
         int numberOfSpaces = columnWidth - cellValue.length();
         StringBuilder cellValueBuilder = new StringBuilder(cellValue);
         for (int i = 0; i < numberOfSpaces; i++) {
@@ -132,21 +158,27 @@ public class CsvData {
     }
 
     private static void runMainMenu(CsvData csv) {
-        int currentPage = 2;
+        int currentPage = 1;
         char userInput = 'F';
         while (userInput != 'X') {
             String pageFormatted = csv.getPageFormatted(currentPage);
             System.out.println(pageFormatted);
 
-            userInput = new Scanner(System.in).next().charAt(0);
+            userInput = scanner.next().charAt(0);
 
             switch (userInput) {
                 case 'F': currentPage = 1; break;
                 case 'N': currentPage = Math.min(currentPage + 1, csv.getNumberOfPages()); break;
                 case 'P': currentPage = Math.max(currentPage - 1, 1); break;
                 case 'L': currentPage = csv.getNumberOfPages(); break;
+                case 'J': currentPage = getUserInputPageNumber(); break;
             }
         }
+    }
+
+    private static int getUserInputPageNumber() {
+        System.out.println("Please enter a page number.");
+        return scanner.nextInt();
     }
 
     private static int determineNumberOfPages(String[] args) {
